@@ -1,0 +1,12 @@
+# Query and monitor kernel devices
+interface io.systemd.devices
+
+type Device (
+  device_path: string,
+  subsystem: string,
+  name: string,
+  node: string
+)
+
+# Subscribe to kernel device events
+method Monitor(subsystem: string) -> (event: string, devices: Device[])
