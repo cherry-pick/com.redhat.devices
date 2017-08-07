@@ -267,7 +267,6 @@ int main(int argc, char **argv) {
                 fd = 3;
 
         r = varlink_server_new(&m->server, address, fd,
-                               "io.systemd.devices",
                                NULL,
                                &io_systemd_devices_varlink, 1);
         if (r < 0)
