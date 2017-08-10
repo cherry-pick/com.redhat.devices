@@ -31,7 +31,7 @@ static long exit_error(long error) {
 }
 
 typedef struct {
-        VarlinkServer *server;
+        VarlinkService *service;
 
         int epoll_fd;
         int signal_fd;
@@ -50,8 +50,8 @@ static void manager_free(Manager *m) {
         if (m->uevent_fd >= 0)
                 close(m->uevent_fd);
 
-        if (m->server)
-                varlink_server_free(m->server);
+        if (m->service)
+                varlink_service_free(m->service);
 
         if (m->udev)
                 udev_unref(m->udev);
@@ -178,7 +178,7 @@ static long peer_dispatch(Peer *peer) {
         return varlink_call_reply(peer->call, out, VARLINK_REPLY_CONTINUES);
 }
 
-static long io_systemd_devices_monitor(VarlinkServer *server,
+static long io_systemd_devices_monitor(VarlinkService *service,
                                        VarlinkCall *call,
                                        VarlinkObject *parameters,
                                        uint64_t flags,
@@ -266,10 +266,14 @@ int main(int argc, char **argv) {
         if (read(3, NULL, 0) == 0)
                 fd = 3;
 
-        r = varlink_server_new(&m->server, address, fd,
-                               NULL,
-                               &io_systemd_devices_varlink, 1);
+        r = varlink_service_new(&m->service, "io.systemd.devices", VERSION, address, fd);
         if (r < 0)
+                return exit_error(ERROR_PANIC);
+
+        r = varlink_service_add_interface(m->service, io_systemd_devices_varlink,
+                                          "Monitor", io_systemd_devices_monitor, m,
+                                          NULL);
+        if (r <0 )
                 return exit_error(ERROR_PANIC);
 
         m->signal_fd = make_signalfd();
@@ -278,13 +282,8 @@ int main(int argc, char **argv) {
 
         m->epoll_fd = epoll_create(EPOLL_CLOEXEC);
         if (m->epoll_fd < 0 ||
-            epoll_add(m->epoll_fd, varlink_server_get_fd(m->server), m->server) < 0 ||
+            epoll_add(m->epoll_fd, varlink_service_get_fd(m->service), m->service) < 0 ||
             epoll_add(m->epoll_fd, m->signal_fd, NULL) < 0)
-                return exit_error(ERROR_PANIC);
-
-        r = varlink_server_set_method_callback(m->server, "io.systemd.devices.Monitor",
-                                               io_systemd_devices_monitor, m);
-        if (r < 0)
                 return exit_error(ERROR_PANIC);
 
         for (;;) {
@@ -302,8 +301,8 @@ int main(int argc, char **argv) {
                 if (n == 0)
                         continue;
 
-                if (event.data.ptr == m->server) {
-                        r = varlink_server_process_events(m->server);
+                if (event.data.ptr == m->service) {
+                        r = varlink_service_process_events(m->service);
                         if (r < 0) {
                                 if (r != -EPIPE)
                                         return exit_error(ERROR_PANIC);
