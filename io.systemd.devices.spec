@@ -1,13 +1,10 @@
-%define build_date %(date +"%%a %%b %%d %%Y")
-%define build_timestamp %(date +"%%Y%%m%%d.%%H%M%%S")
-
 Name:           io.systemd.devices
 Version:        1
-Release:        %{build_timestamp}%{?dist}
+Release:        1%{?dist}
 Summary:        Systemd Device Interface
 License:        ASL2.0
-URL:            https://github.com/varlink/io.systemd.devices
-Source0:        https://github.com/varlink/io.systemd.devices/archive/v%{version}.tar.gz
+URL:            https://github.com/varlink/%{name}
+Source0:        https://github.com/varlink/%{name}/archive/%{name}-%{version}.tar.gz
 BuildRequires:  autoconf automake pkgconfig
 BuildRequires:  libvarlink-devel
 BuildRequires:  libudev-devel
@@ -33,5 +30,5 @@ make %{?_smp_mflags}
 %{_bindir}/io.systemd.devices
 
 %changelog
-* %{build_date} <info@varlink.org> %{version}-%{build_timestamp}
-- %{name} %{version}
+* Tue Aug 29 2017 <info@varlink.org> 1-1
+- io.systemd.devices 1
