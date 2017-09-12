@@ -29,8 +29,6 @@ export LC_CTYPE=C.utf8
 %meson_install
 
 %files
-%license AUTHORS
-%license COPYRIGHT
 %license LICENSE
 %{_bindir}/io.systemd.devices
 
