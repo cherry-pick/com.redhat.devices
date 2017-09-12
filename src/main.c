@@ -1,3 +1,6 @@
+#include "io.systemd.devices.varlink.c.inc"
+#include "util.h"
+
 #include <assert.h>
 #include <errno.h>
 #include <signal.h>
@@ -8,9 +11,6 @@
 #include <libudev.h>
 #include <time.h>
 #include <varlink.h>
-
-#include "io.systemd.devices.varlink.h"
-#include "util.h"
 
 enum {
         ERROR_PANIC = 1,

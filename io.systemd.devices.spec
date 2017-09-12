@@ -5,7 +5,9 @@ Summary:        Systemd Device Interface
 License:        ASL2.0
 URL:            https://github.com/varlink/%{name}
 Source0:        https://github.com/varlink/%{name}/archive/%{name}-%{version}.tar.gz
-BuildRequires:  autoconf automake pkgconfig
+BuildRequires:  meson
+BuildRequires:  gcc
+BuildRequires:  pkgconfig
 BuildRequires:  libvarlink-devel
 BuildRequires:  libudev-devel
 
@@ -16,12 +18,15 @@ Service to enumerate and monitor kernel devices.
 %setup -q
 
 %build
-./autogen.sh
-%configure
-make %{?_smp_mflags}
+%meson
+%meson_build
+
+%check
+export LC_CTYPE=C.utf8
+%meson_test
 
 %install
-%make_install
+%meson_install
 
 %files
 %license AUTHORS
