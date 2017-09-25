@@ -84,6 +84,7 @@ static long manager_new(Manager **mp) {
 typedef struct {
         Manager *m;
         VarlinkCall *call;
+        uint64_t flags;
         struct udev_monitor *monitor;
 } Peer;
 
@@ -121,12 +122,14 @@ static void connection_closed(VarlinkCall *call, void *userdata) {
 static long peer_new(Peer **peerp,
                      Manager *m,
                      VarlinkCall *call,
+                     uint64_t flags,
                      const char *subsystem, const char *devtype) {
         _cleanup_(peer_freep) Peer *peer = NULL;
 
         peer = calloc(1, sizeof(Peer));
         peer->m = m;
         peer->call = call;
+        peer->flags = flags;
         varlink_call_set_canceled_callback(peer->call, connection_closed, peer);
 
         peer->monitor = udev_monitor_new_from_netlink(m->udev, "udev");
@@ -175,7 +178,9 @@ static long peer_dispatch(Peer *peer) {
         add_udev_device(devices, d);
         udev_device_unref(d);
 
-        return varlink_call_reply(peer->call, out, VARLINK_REPLY_CONTINUES);
+        return varlink_call_reply(peer->call,
+                                  out,
+                                  peer->flags & VARLINK_CALL_MORE ? VARLINK_REPLY_CONTINUES : 0);
 }
 
 static long io_systemd_devices_monitor(VarlinkService *service,
@@ -194,7 +199,7 @@ static long io_systemd_devices_monitor(VarlinkService *service,
 
         varlink_object_get_string(parameters, "subsystem", &subsystem);
 
-        r = peer_new(&peer, m, call, subsystem, NULL);
+        r = peer_new(&peer, m, call, flags, subsystem, NULL);
         if (r < 0)
                 return r;
 
@@ -223,7 +228,7 @@ static long io_systemd_devices_monitor(VarlinkService *service,
 
         peer = NULL;
 
-        return varlink_call_reply(call, out, VARLINK_REPLY_CONTINUES);
+        return varlink_call_reply(call, out, flags & VARLINK_CALL_MORE ? VARLINK_REPLY_CONTINUES : 0);
 }
 
 static int make_signalfd(void) {
