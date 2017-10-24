@@ -281,6 +281,10 @@ int main(int argc, char **argv) {
         if (r < 0)
                 return exit_error(ERROR_PANIC);
 
+        r = varlink_service_set_credentials_mode(m->service, 0666);
+        if (r < 0)
+                return exit_error(ERROR_PANIC);
+
         r = varlink_service_add_interface(m->service, io_systemd_devices_varlink,
                                           "Monitor", io_systemd_devices_monitor, m,
                                           NULL);
