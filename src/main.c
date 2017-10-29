@@ -267,7 +267,7 @@ int main(int argc, char **argv) {
         if (!address)
                 return exit_error(ERROR_MISSING_ADDRESS);
 
-        /* An activator passed us our connection. */
+        /* An activator passed us our listen socket. */
         if (read(3, NULL, 0) == 0)
                 fd = 3;
 
@@ -278,10 +278,6 @@ int main(int argc, char **argv) {
                                 "https://github.com/varlink/io.systemd.devices",
                                 address,
                                 fd);
-        if (r < 0)
-                return exit_error(ERROR_PANIC);
-
-        r = varlink_service_set_credentials_mode(m->service, 0666);
         if (r < 0)
                 return exit_error(ERROR_PANIC);
 
