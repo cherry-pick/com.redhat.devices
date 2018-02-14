@@ -130,7 +130,7 @@ static long peer_new(Peer **peerp,
         peer->m = m;
         peer->call = call;
         peer->flags = flags;
-        varlink_call_set_canceled_callback(peer->call, connection_closed, peer);
+        varlink_call_set_connection_closed_callback(peer->call, connection_closed, peer);
 
         peer->monitor = udev_monitor_new_from_netlink(m->udev, "udev");
         if (!peer->monitor)

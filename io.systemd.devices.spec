@@ -1,5 +1,5 @@
 Name:           io.systemd.devices
-Version:        1
+Version:        2
 Release:        1%{?dist}
 Summary:        Systemd Device Interface
 License:        ASL2.0
@@ -33,5 +33,5 @@ export LC_CTYPE=C.utf8
 %{_bindir}/io.systemd.devices
 
 %changelog
-* Tue Aug 29 2017 <info@varlink.org> 1-1
-- io.systemd.devices 1
+* Tue Aug 29 2017 <info@varlink.org> 2-1
+- io.systemd.devices 2
