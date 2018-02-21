@@ -150,6 +150,8 @@ static long peer_new(Peer **peerp,
 
 static long add_udev_device(VarlinkArray *devices, struct udev_device *d) {
         _cleanup_(varlink_object_unrefp) VarlinkObject *device = NULL;
+        _cleanup_(varlink_array_unrefp) VarlinkArray *properties = NULL;
+        struct udev_list_entry *l;
 
         varlink_object_new(&device);
         varlink_object_set_string(device, "device_path", udev_device_get_devpath(d));
@@ -157,6 +159,17 @@ static long add_udev_device(VarlinkArray *devices, struct udev_device *d) {
         varlink_object_set_string(device, "subsystem", udev_device_get_subsystem(d));
         if (udev_device_get_devnode(d))
                 varlink_object_set_string(device, "node", udev_device_get_devnode(d));
+
+        varlink_array_new(&properties);
+        udev_list_entry_foreach(l, udev_device_get_properties_list_entry(d)) {
+                _cleanup_(varlink_object_unrefp) VarlinkObject *property = NULL;
+
+                varlink_object_new(&property);
+                varlink_object_set_string(property, "name", udev_list_entry_get_name(l));
+                varlink_object_set_string(property, "value", udev_list_entry_get_value(l));
+                varlink_array_append_object(properties, property);
+        }
+        varlink_object_set_array(device, "properties", properties);
 
         return varlink_array_append_object(devices, device);
 }
@@ -178,9 +191,7 @@ static long peer_dispatch(Peer *peer) {
         add_udev_device(devices, d);
         udev_device_unref(d);
 
-        return varlink_call_reply(peer->call,
-                                  out,
-                                  peer->flags & VARLINK_CALL_MORE ? VARLINK_REPLY_CONTINUES : 0);
+        return varlink_call_reply(peer->call, out, VARLINK_REPLY_CONTINUES);
 }
 
 static long com_redhat_devices_monitor(VarlinkService *service,
@@ -198,13 +209,16 @@ static long com_redhat_devices_monitor(VarlinkService *service,
         long r;
 
         varlink_object_get_string(parameters, "subsystem", &subsystem);
-
-        r = peer_new(&peer, m, call, flags, subsystem, NULL);
-        if (r < 0)
-                return r;
-
         varlink_array_new(&devices);
 
+        /* Subscribe to uevents before enumerating /sys. */
+        if (flags & VARLINK_CALL_MORE) {
+                r = peer_new(&peer, m, call, flags, subsystem, NULL);
+                if (r < 0)
+                        return r;
+        }
+
+        /* Enumerate current devices in /sys. */
         e = udev_enumerate_new(m->udev);
         udev_enumerate_add_match_subsystem(e, subsystem);
         udev_enumerate_scan_devices(e);
@@ -222,13 +236,19 @@ static long com_redhat_devices_monitor(VarlinkService *service,
 
         udev_enumerate_unref(e);
 
+        /* Reply with "current" device list. */
         varlink_object_new(&out);
         varlink_object_set_string(out, "event", "current");
         varlink_object_set_array(out, "devices", devices);
 
-        peer = NULL;
+        if (flags & VARLINK_CALL_MORE) {
+                /* The peer will be freed when the connection is closed. */
+                peer = NULL;
 
-        return varlink_call_reply(call, out, flags & VARLINK_CALL_MORE ? VARLINK_REPLY_CONTINUES : 0);
+                return varlink_call_reply(call, out, VARLINK_REPLY_CONTINUES);
+        }
+
+        return varlink_call_reply(call, out, 0);
 }
 
 static int make_signalfd(void) {
