@@ -1,4 +1,4 @@
-Name:           io.systemd.devices
+Name:           com.redhat.devices
 Version:        2
 Release:        1%{?dist}
 Summary:        Systemd Device Interface
@@ -30,8 +30,8 @@ export LC_CTYPE=C.utf8
 
 %files
 %license LICENSE
-%{_bindir}/io.systemd.devices
+%{_bindir}/com.redhat.devices
 
 %changelog
 * Tue Aug 29 2017 <info@varlink.org> 2-1
-- io.systemd.devices 2
+- com.redhat.devices 2

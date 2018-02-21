@@ -1,4 +1,4 @@
-#include "io.systemd.devices.varlink.c.inc"
+#include "com.redhat.devices.varlink.c.inc"
 #include "util.h"
 
 #include <assert.h>
@@ -183,7 +183,7 @@ static long peer_dispatch(Peer *peer) {
                                   peer->flags & VARLINK_CALL_MORE ? VARLINK_REPLY_CONTINUES : 0);
 }
 
-static long io_systemd_devices_monitor(VarlinkService *service,
+static long com_redhat_devices_monitor(VarlinkService *service,
                                        VarlinkCall *call,
                                        VarlinkObject *parameters,
                                        uint64_t flags,
@@ -272,17 +272,17 @@ int main(int argc, char **argv) {
                 fd = 3;
 
         r = varlink_service_new(&m->service,
-                                "systemd",
-                                "Device Manager",
+                                "Red Hat",
+                                "Device Interface",
                                 VERSION,
-                                "https://github.com/varlink/io.systemd.devices",
+                                "https://github.com/varlink/com.redhat.devices",
                                 address,
                                 fd);
         if (r < 0)
                 return exit_error(ERROR_PANIC);
 
-        r = varlink_service_add_interface(m->service, io_systemd_devices_varlink,
-                                          "Monitor", io_systemd_devices_monitor, m,
+        r = varlink_service_add_interface(m->service, com_redhat_devices_varlink,
+                                          "Monitor", com_redhat_devices_monitor, m,
                                           NULL);
         if (r <0 )
                 return exit_error(ERROR_PANIC);

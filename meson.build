@@ -1,4 +1,4 @@
-project('io.systemd.devices', 'c',
+project('com.redhat.devices', 'c',
         version : '1',
         license : 'ASL2.0',
         default_options: [

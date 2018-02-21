@@ -1,4 +1,4 @@
-io.systemd.devices
+com.redhat.devices
 ==================
 
 A varlink service for udev.
