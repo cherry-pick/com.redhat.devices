@@ -150,7 +150,7 @@ static long peer_new(Peer **peerp,
 
 static long add_udev_device(VarlinkArray *devices, struct udev_device *d) {
         _cleanup_(varlink_object_unrefp) VarlinkObject *device = NULL;
-        _cleanup_(varlink_array_unrefp) VarlinkArray *properties = NULL;
+        _cleanup_(varlink_object_unrefp) VarlinkObject *properties = NULL;
         struct udev_list_entry *l;
 
         varlink_object_new(&device);
@@ -160,16 +160,10 @@ static long add_udev_device(VarlinkArray *devices, struct udev_device *d) {
         if (udev_device_get_devnode(d))
                 varlink_object_set_string(device, "node", udev_device_get_devnode(d));
 
-        varlink_array_new(&properties);
-        udev_list_entry_foreach(l, udev_device_get_properties_list_entry(d)) {
-                _cleanup_(varlink_object_unrefp) VarlinkObject *property = NULL;
-
-                varlink_object_new(&property);
-                varlink_object_set_string(property, "name", udev_list_entry_get_name(l));
-                varlink_object_set_string(property, "value", udev_list_entry_get_value(l));
-                varlink_array_append_object(properties, property);
-        }
-        varlink_object_set_array(device, "properties", properties);
+        varlink_object_new(&properties);
+        udev_list_entry_foreach(l, udev_device_get_properties_list_entry(d))
+                varlink_object_set_string(properties, udev_list_entry_get_name(l), udev_list_entry_get_value(l));
+        varlink_object_set_object(device, "properties", properties);
 
         return varlink_array_append_object(devices, device);
 }
